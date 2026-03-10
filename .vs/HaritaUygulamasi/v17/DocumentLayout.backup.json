@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\yaren\\source\\repos\\HaritaUygulamasi\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{2E9139DB-0386-4C31-BF72-7B66457AD65A}|HaritaUygulamasi\\HaritaUygulamasi.csproj|c:\\users\\yaren\\source\\repos\\haritauygulamasi\\haritauygulamasi\\views\\haritanesnesi\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{2E9139DB-0386-4C31-BF72-7B66457AD65A}|HaritaUygulamasi\\HaritaUygulamasi.csproj|solutionrelative:haritauygulamasi\\views\\haritanesnesi\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\yaren\\source\\repos\\HaritaUygulamasi\\HaritaUygulamasi\\Views\\HaritaNesnesi\\Index.cshtml",
+              "RelativeDocumentMoniker": "HaritaUygulamasi\\Views\\HaritaNesnesi\\Index.cshtml",
+              "ToolTip": "C:\\Users\\yaren\\source\\repos\\HaritaUygulamasi\\HaritaUygulamasi\\Views\\HaritaNesnesi\\Index.cshtml",
+              "RelativeToolTip": "HaritaUygulamasi\\Views\\HaritaNesnesi\\Index.cshtml",
+              "ViewState": "AgIAAJ4EAAAAAAAAAAAswMAEAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-08-20T13:47:54.882Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

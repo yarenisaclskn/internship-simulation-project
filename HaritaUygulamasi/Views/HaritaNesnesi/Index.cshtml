@@ -1,0 +1,1230 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>3D Map - Debug</title>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #cesiumContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #simulationPanel {
+            position: fixed;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 350px;
+            padding: 20px;
+            background-color: rgba(176, 216, 176, 0.9);
+            border-radius: 50px;
+            border: 1px solid ghostwhite;
+            z-index: 1000;
+            display: none;
+            height: auto;
+            max-height: 80vh; /* Ekran yüksekliğinin %80'ini geçmesin */
+            overflow-y: auto; /* İçerik taştığında dikey kaydırma çubuğu göster */
+        }
+        #leftPanel {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 350px;
+            height: auto;
+            max-height: 80vh;
+            background-color: #B0D8B0;
+            color: black;
+            padding: 50px;
+            border-radius: 50px;
+            border-color: ghostwhite;
+            box-shadow: 5px 5px 15px #326346;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+
+
+        #secondPanel {
+            font-size: 16px;
+            position: fixed;
+            left: calc(80px + 280px + 40px);
+            top: 50%;
+            transform: translateY(-50%);
+            width: 450px;
+            height: 500px;
+            background-color: #B0D8B0;
+            color: #326346;
+            padding: 30px;
+            border-radius: 20px;
+            border-color: ghostwhite;
+            box-shadow: 5px 5px 15px #326346;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+            #secondPanel ul {
+                list-style-type: none;
+                padding-left: 0;
+                margin: 0;
+            }
+
+            #secondPanel li {
+                margin-bottom: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            #secondPanel label {
+                font-weight: bold;
+                margin-bottom: 5px;
+                color: #326346;
+            }
+
+            #secondPanel input[type="text"], #secondPanel input[type="file"] {
+                padding: 10px;
+                border: 2px solid #326346;
+                border-radius: 5px;
+                font-size: 14px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            #secondPanel button {
+                background-color: #326346;
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-top: 10px;
+            }
+
+                #secondPanel button:hover {
+                    background-color: #57AD79;
+                }
+
+        .close-panel-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #326346;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        #togglePanelBtn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1100;
+            font-size: 18px;
+            background-color: #B0D8B0;
+            color: ghostwhite;
+            border: none;
+            border-radius: 5px;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        #addPanelBtn {
+            position: absolute;
+            top: 15px;
+            right: 50px;
+            width: 30px;
+            height: 30px;
+            border: none;
+            background-color: #326346;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .nesne-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+            border-bottom: 1px solid #57AD79;
+        }
+
+            .nesne-item:last-child {
+                border-bottom: none;
+            }
+
+            .nesne-item .icons {
+                display: flex;
+                gap: 10px;
+            }
+
+                .nesne-item .icons i {
+                    cursor: pointer;
+                    color: #326346;
+                    font-size: 16px;
+                }
+
+        #debugPanel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 10px;
+            max-width: 200px;
+            z-index: 2000;
+            opacity: 0.7;
+        }
+
+        #errorLog {
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid red;
+            padding: 2px;
+            margin-top: 2px;
+            max-height: 50px;
+            overflow-y: auto;
+            font-size: 9px;
+        }
+
+        /* Rapor paneli için sayfa benzeri stil */
+        #reportPanel {
+            position: fixed;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 600px; /* Genişlik artırıldı */
+            height: 700px; /* Yükseklik artırıldı */
+            padding: 20px;
+            background-color: rgba(176, 216, 176, 0.9);
+            border-radius: 50px;
+            border: 1px solid ghostwhite;
+            z-index: 1000;
+            display: none;
+        }
+
+            #reportPanel .report-page {
+                background-color: white;
+                padding: 20px;
+                border-radius: 10px;
+                color: black;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                overflow: auto;
+                height: 500px; /* İçerik için ayrılan alan */
+            }
+
+        #reportHeader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #reportTitle {
+            font-size: 24px;
+            font-weight: bold;
+            color: #326346;
+            text-align: center;
+        }
+
+        #reportTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+            #reportTable th, #reportTable td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+
+            #reportTable th {
+                background-color: #f2f2f2;
+            }
+    </style>
+</head>
+<body>
+    <div id="leftPanel">
+        <button id="addPanelBtn">+</button>
+        <button id="closeLeftPanelBtn" class="close-panel-btn">x</button>
+        <ul id="nesneListesi"></ul>
+    </div>
+    <div id="secondPanel">
+        <button id="closeSecondPanelBtn" class="close-panel-btn">x</button>
+        <h3 style="margin-top: 0; color: #326346; text-align: center;">Model Bilgileri</h3>
+        <ul>
+            <li>
+                <label for="rotaSecimi">Rota Seçimi:</label>
+                <select id="rotaSecimi"></select>
+            </li>
+            <li>
+                <input type="hidden" id="nesneId" />
+            </li>
+            <li>
+                <label for="nesneName">İsim:</label>
+                <input type="text" id="nesneName" placeholder="Model ismini giriniz" />
+            </li>
+            <li>
+                <label for="nesneLat">Enlem (Latitude):</label>
+                <input type="text" id="nesneLat" placeholder="örn: 40.03883" />
+            </li>
+            <li>
+                <label for="nesneLon">Boylam (Longitude):</label>
+                <input type="text" id="nesneLon" placeholder="örn: -75.59777" />
+            </li>
+            <li>
+                <label for="nesneAlt">Yükseklik (Altitude):</label>
+                <input type="text" id="nesneAlt" placeholder="metre cinsinden (örn: 100)" />
+            </li>
+            <li>
+                <label for="nesnePitch">Eğim (Pitch):</label>
+                <input type="text" id="nesnePitch" placeholder="derece cinsinden (örn: 45)" />
+            </li>
+            <li>
+                <label for="nesneFile">3D Model Dosyası (.glb):</label>
+                <input type="file" accept=".glb" id="nesneFile" />
+            </li>
+            <li>
+                <button id="saveNesneBtn">Kaydet</button>
+            </li>
+        </ul>
+    </div>
+    <div id="simulationPanel" style="display: none; position: fixed; right: 10px; top: 50%; transform: translateY(-50%); width: 350px; padding: 20px; background-color: rgba(176, 216, 176, 0.9); border-radius: 50px; border: 1px solid ghostwhite; z-index: 1000;">
+        
+        
+        
+        
+        <button id="closeSimulationPanelBtn" style="position: absolute; top: 10px; right: 20px; font-size: 24px; cursor: pointer; background: none; border: none; color: #326346;">&times;</button>
+        <h3 style="margin-top: 0; color: #326346; text-align: center;">Simülasyon Durakları</h3>
+        <table id="durakTablosu" style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
+            <thead>
+                <tr style="background-color: #57AD79; color: white;">
+                    <th style="padding: 5px;">Durak Adı</th>
+                    <th style="padding: 5px;">Enlem</th>
+                    <th style="padding: 5px;">Boylam</th>
+                    <th style="padding: 5px;">Yükseklik</th>
+                    <th style="padding: 5px;">Hız</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+
+        <div style="text-align: center; margin-top: 15px;">
+            <button id="startSimulationBtn" style="padding: 10px 20px; background-color: #326346; color: white; border: none; border-radius: 10px; cursor: pointer;">Simülasyonu Başlat</button>
+            <button id="pauseSimulationBtn" style="display:none; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 10px; cursor: pointer;">Durdur</button>
+            <button id="endSimulationBtn" style="display:none; margin-left: 10px; padding: 10px 20px; background-color: #757575; color: white; border: none; border-radius: 10px; cursor: pointer;">Sonlandır</button>
+        </div>
+    </div>
+
+    <div id="reportPanel">
+        <button id="closeReportPanelBtn" class="close-panel-btn">x</button>
+        <div id="reportPage" class="report-page">
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+        <div style="text-align: center; margin-top: 15px;">
+            <button id="downloadPdfBtn" style="padding: 10px 20px; background-color: #326346; color: white; border: none; border-radius: 10px; cursor: pointer;">PDF İndir</button>
+            <button id="downloadExcelBtn" style="padding: 10px 20px; background-color: #57AD79; color: white; border: none; border-radius: 10px; cursor: pointer;">Excel İndir</button>
+            <button id="downloadWordBtn" style="padding: 10px 20px; background-color: #326346; color: white; border: none; border-radius: 10px; cursor: pointer;">Word İndir</button>
+        </div>
+    </div>
+
+
+    <div id="debugPanel" style="display: none;">
+        <div>Status: <span id="status">Loading...</span></div>
+        <div>Cesium: <span id="cesiumStatus">Not loaded</span></div>
+        <div>jQuery: <span id="jqueryStatus">Not loaded</span></div>
+        <div id="errorLog"></div>
+    </div>
+
+    <div id="cesiumContainer"></div>
+    <button id="togglePanelBtn">+</button>
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-docx/dist/html-to-docx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+        if (typeof jQuery !== 'undefined') {
+            document.getElementById('jqueryStatus').textContent = 'Loaded';
+        } else {
+            document.getElementById('jqueryStatus').textContent = 'Failed';
+        }
+    </script>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.107/Build/Cesium/Cesium.js"></script>
+    <script>
+        if (typeof Cesium !== 'undefined') {
+            document.getElementById('cesiumStatus').textContent = 'Loaded';
+        } else {
+            document.getElementById('cesiumStatus').textContent = 'Failed';
+        }
+
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjMDQyMzU5My01N2ZlLTQ4YWEtODZhMC1jOTAxZjkzOWQ1N2EiLCJpZCI6MzI4NDUzLCJpYXQiOjE3NTUwNzExNjl9.AoWgMsJttcx-6kCvH-OC-PUwy9v2WN_v9T3-EKljouA';
+        let viewer;
+        const leftPanel = document.getElementById('leftPanel');
+        const secondPanel = document.getElementById('secondPanel');
+        const toggleBtn = document.getElementById('togglePanelBtn');
+        const addPanelBtn = document.getElementById('addPanelBtn');
+        const closeLeftPanelBtn = document.getElementById('closeLeftPanelBtn');
+        const closeSecondPanelBtn = document.getElementById('closeSecondPanelBtn');
+        const saveNesneBtn = document.getElementById('saveNesneBtn');
+        const simulationPanel = document.getElementById('simulationPanel');
+        const reportPanel = document.getElementById('reportPanel');
+        const closeReportPanelBtn = document.getElementById('closeReportPanelBtn');
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+        const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+        const downloadWordBtn = document.getElementById('downloadWordBtn');
+
+        let flightPathPositions = [];
+        let routeLineEntity = null;
+        let modelEntity = null;
+        let currentSimulationId = null;
+        let routePoints = [];
+        let currentWaypointIndex = 0;
+        let clockListener;
+        let routeData = [];
+
+        async function initCesium() {
+            try {
+                viewer = new Cesium.Viewer("cesiumContainer", {
+                    timeline: false,
+                    animation: false,
+                    infoBox: false,
+                    homeButton: false,
+                    sceneModePicker: false,
+                    navigationHelpButton: false,
+                    baseLayerPicker: false,
+                    geocoder: false,
+                    fullscreenButton: false,
+                    vrButton: false,
+                    selectionIndicator: false,
+                    navigationInstructionsInitiallyVisible: false,
+                });
+                loadNesneler();
+            } catch (error) {
+                console.error('Cesium initialization error:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initCesium();
+            const startSimulationBtn = document.getElementById('startSimulationBtn');
+            const pauseSimulationBtn = document.getElementById('pauseSimulationBtn');
+            const endSimulationBtn = document.getElementById('endSimulationBtn');
+
+            toggleBtn.addEventListener('click', () => {
+                if (leftPanel.style.display === 'none' || leftPanel.style.display === '') {
+                    leftPanel.style.display = 'block';
+                } else {
+                    leftPanel.style.display = 'none';
+                    secondPanel.style.display = 'none';
+                }
+            });
+
+            addPanelBtn.addEventListener('click', () => {
+                openAddPanel();
+            });
+
+            closeLeftPanelBtn.addEventListener('click', () => {
+                leftPanel.style.display = 'none';
+                secondPanel.style.display = 'none';
+            });
+
+            closeSecondPanelBtn.addEventListener('click', () => {
+                secondPanel.style.display = 'none';
+            });
+
+            document.getElementById('closeSimulationPanelBtn').addEventListener('click', () => {
+                simulationPanel.style.display = 'none';
+                endSimulation();
+            });
+
+            closeReportPanelBtn.addEventListener('click', () => {
+                reportPanel.style.display = 'none';
+            });
+
+            downloadPdfBtn.disabled = true;
+            downloadExcelBtn.disabled = true;
+            downloadWordBtn.disabled = true;
+
+            downloadPdfBtn.addEventListener('click', () => {
+                if (currentPdfUrl) {
+                    const link = document.createElement('a');
+                    link.href = currentPdfUrl;
+                    link.download = 'UcusRaporu.pdf';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert("PDF dosyası henüz hazır değil.");
+                }
+            });
+
+            downloadExcelBtn.addEventListener('click', () => {
+                if (routeData.length > 1) {
+                    const data = [
+                        ["Başlangıç Noktası", `${routeData[0].name} (${routeData[0].lat.toFixed(4)}, ${routeData[0].lon.toFixed(4)})`],
+                        ["Bitiş Noktası", `${routeData[routeData.length - 1].name} (${routeData[routeData.length - 1].lat.toFixed(4)}, ${routeData[routeData.length - 1].lon.toFixed(4)})`],
+                        ["Ortalama Hız", `${(routeData.reduce((sum, d) => sum + (d.speed || 0), 0) / (routeData.length - 1)).toFixed(2)} m/s`],
+                        ["Toplam Mesafe", `${(routeData.slice(1).reduce((sum, d, i) => sum + Cesium.Cartesian3.distance(Cesium.Cartesian3.fromDegrees(routeData[i].lon, routeData[i].lat, routeData[i].alt), Cesium.Cartesian3.fromDegrees(d.lon, d.lat, d.alt)), 0) / 1000).toFixed(2)} km`],
+                        ["Ortalama İrtifa", `${(routeData.reduce((sum, d) => sum + (d.alt || 0), 0) / routeData.length).toFixed(2)} m`]
+                    ];
+                    const ws = XLSX.utils.aoa_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Uçuş Raporu");
+                    XLSX.writeFile(wb, "UcusRaporu.xlsx");
+                } else {
+                    alert("Rapor verisi bulunamadı.");
+                }
+            });
+
+            downloadWordBtn.addEventListener('click', async () => {
+                if (routeData.length > 1) {
+                    const reportContent = `
+                            <style>
+                                p b { font-weight: bold; display: inline-block; width: 150px; }
+                            </style>
+                            <h3>Uçuş Simülasyon Raporu</h3>
+                            <p><b>Başlangıç Noktası:</b> ${routeData[0].name} (${routeData[0].lat.toFixed(4)}, ${routeData[0].lon.toFixed(4)})</p>
+                            <p><b>Bitiş Noktası:</b> ${routeData[routeData.length - 1].name} (${routeData[routeData.length - 1].lat.toFixed(4)}, ${routeData[routeData.length - 1].lon.toFixed(4)})</p>
+                            <p><b>Ortalama Hız:</b> ${(routeData.reduce((sum, d) => sum + (d.speed || 0), 0) / (routeData.length - 1)).toFixed(2)} m/s</p>
+                            <p><b>Toplam Mesafe:</b> ${(routeData.slice(1).reduce((sum, d, i) => sum + Cesium.Cartesian3.distance(Cesium.Cartesian3.fromDegrees(routeData[i].lon, routeData[i].lat, routeData[i].alt), Cesium.Cartesian3.fromDegrees(d.lon, d.lat, d.alt)), 0) / 1000).toFixed(2)} km</p>
+                            <p><b>Ortalama İrtifa:</b> ${(routeData.reduce((sum, d) => sum + (d.alt || 0), 0) / routeData.length).toFixed(2)} m</p>
+                        `;
+                    const docxBlob = await htmlToDocx(reportContent);
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(docxBlob);
+                    link.download = 'UcusRaporu.docx';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert("Rapor verisi bulunamadı.");
+                }
+            });
+
+
+            startSimulationBtn.addEventListener('click', () => {
+                if (currentSimulationId) {
+                    startSimulation(currentSimulationId);
+                    startSimulationBtn.style.display = 'none';
+                    pauseSimulationBtn.style.display = 'inline-block';
+                    endSimulationBtn.style.display = 'inline-block';
+                }
+            });
+            pauseSimulationBtn.addEventListener('click', () => {
+                pauseSimulation();
+                startSimulationBtn.textContent = 'Devam Et';
+                startSimulationBtn.style.display = 'inline-block';
+                pauseSimulationBtn.style.display = 'none';
+            });
+            endSimulationBtn.addEventListener('click', () => {
+                endSimulation();
+                startSimulationBtn.textContent = 'Simülasyonu Başlat';
+            });
+            saveNesneBtn.addEventListener('click', () => {
+                const nesneId = document.getElementById('nesneId').value;
+                const nesneName = document.getElementById('nesneName').value;
+                const nesneLat = document.getElementById('nesneLat').value;
+                const nesneLon = document.getElementById('nesneLon').value;
+                const nesneAlt = document.getElementById('nesneAlt').value;
+                const nesnePitch = document.getElementById('nesnePitch').value;
+                const nesneFile = document.getElementById('nesneFile').files[0];
+                const rotaId = document.getElementById('rotaSecimi').value;
+
+                if (!nesneName.trim()) {
+                    alert("İsim alanı zorunludur!");
+                    return;
+                }
+
+                if (!nesneLat || isNaN(parseFloat(nesneLat))) {
+                    alert("Geçerli bir enlem değeri girin!");
+                    return;
+                }
+
+                if (!nesneLon || isNaN(parseFloat(nesneLon))) {
+                    alert("Geçerli bir boylam değeri girin!");
+                    return;
+                }
+
+                if (!nesneId && !nesneFile) {
+                    alert("Yeni bir nesne eklerken 3D model dosyası seçmek zorunludur.");
+                    return;
+                }
+
+                const saveObjectData = (glbFilePath) => {
+                    const nesneData = {
+                        Id: nesneId ? parseInt(nesneId) : 0,
+                        Name: nesneName.trim(),
+                        Latitude: parseFloat(nesneLat),
+                        Longitude: parseFloat(nesneLon),
+                        Altitude: nesneAlt ? parseFloat(nesneAlt) : null,
+                        Pitch: nesnePitch ? parseFloat(nesnePitch) : null,
+                        glb_file: glbFilePath,
+                        RotaId: rotaId ? parseInt(rotaId) : null
+                    };
+                    const url = nesneId ? '/HaritaNesnesi/UpdateObject' : '/HaritaNesnesi/PostObject';
+
+                    $.ajax({
+                        url: url,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(nesneData),
+                        success: function (response) {
+                            if (response.success) {
+                                alert('Nesne başarıyla kaydedildi!');
+                                secondPanel.style.display = 'none';
+                                loadNesneler();
+                            } else {
+                                alert('Nesne kaydedilirken bir hata oluştu: ' + response.error);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            alert('Sunucuya istek gönderilirken bir hata oluştu: ' + xhr.responseText);
+                            console.error('AJAX hatası:', status, error);
+                        }
+                    });
+                };
+
+                if (nesneFile) {
+                    const formData = new FormData();
+                    formData.append('file', nesneFile);
+
+                    $.ajax({
+                        url: '/HaritaNesnesi/UploadFile',
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            if (response.success) {
+                                saveObjectData(response.filePath);
+                            } else {
+                                alert('Dosya yükleme hatası: ' + response.error);
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            alert('Dosya yüklenirken bir hata oluştu: ' + xhr.responseText);
+                        }
+                    });
+                } else {
+                    if (nesneId) {
+                        $.ajax({
+                            url: `/HaritaNesnesi/GetOneObject/${nesneId}`,
+                            method: 'GET',
+                            success: function (nesne) {
+                                if (nesne && !nesne.error) {
+                                    saveObjectData(nesne.glb_file);
+                                } else {
+                                    alert('Güncellenecek nesnenin eski verileri çekilemedi.');
+                                }
+                            },
+                            error: function () {
+                                alert('Güncellenecek nesnenin eski verileri çekilemedi.');
+                            }
+                        });
+                    } else {
+                        saveObjectData(null);
+                    }
+                }
+            });
+            const nesneListesi = document.getElementById('nesneListesi');
+            nesneListesi.addEventListener('click', (e) => {
+                const targetIcon = e.target.closest('i');
+                if (targetIcon) {
+                    const nesneId = targetIcon.getAttribute('data-id');
+                    if (targetIcon.classList.contains('fa-pencil-alt')) {
+                        editObject(nesneId);
+                    } else if (targetIcon.classList.contains('fa-search-plus')) {
+                        zoomToObject(nesneId);
+                    } else if (targetIcon.classList.contains('fa-times')) {
+                        deleteObject(nesneId);
+                    } else if (targetIcon.classList.contains('fa-eye') || targetIcon.classList.contains('fa-eye-slash')) {
+                        toggleVisibility(nesneId, targetIcon);
+                    } else if (targetIcon.classList.contains('fa-play')) {
+                        currentSimulationId = nesneId;
+                        showSimulationPanel(nesneId);
+                    }
+                }
+            });
+        });
+
+        function loadRotalar(rotaId) {
+            const rotaSecimi = $('#rotaSecimi');
+            rotaSecimi.empty().append('<option value="">-- Rota Seç --</option>');
+            $.ajax({
+                url: '/HaritaNesnesi/GetRotalar',
+                method: 'GET',
+                dataType: 'json',
+                success: function (rotalar) {
+                    rotalar.forEach(rota => {
+                        rotaSecimi.append(`<option value="${rota.RotaId}">${rota.RotaAdi}</option>`);
+                    });
+                    if (rotaId) {
+                        rotaSecimi.val(rotaId);
+                    }
+                },
+                error: function () {
+                    console.error('Rotalar yüklenirken hata oluştu.');
+                }
+            });
+        }
+
+        function deleteObject(id) {
+            if (confirm("Bu nesneyi silmek istediğinizden emin misiniz?")) {
+                try {
+                    fetch('/HaritaNesnesi/DeleteObject', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: parseInt(id) })
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(result => {
+                            if (result.success) {
+                                alert('Nesne başarıyla silindi!');
+                                loadNesneler();
+                            } else {
+                                alert('Silme işlemi başarısız: ' + result.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Silme hatası:', error);
+                            alert('Nesne silinirken bir hata oluştu.');
+                        });
+                } catch (error) {
+                    console.error('Silme hatası:', error);
+                    alert('Nesne silinirken bir hata oluştu.');
+                }
+            }
+        }
+
+        function openAddPanel() {
+            document.getElementById('nesneId').value = '';
+            document.getElementById('nesneName').value = '';
+            document.getElementById('nesneLat').value = '';
+            document.getElementById('nesneLon').value = '';
+            document.getElementById('nesneAlt').value = '';
+            document.getElementById('nesnePitch').value = '';
+            document.getElementById('nesneFile').value = '';
+            document.getElementById('saveNesneBtn').textContent = 'Kaydet';
+            loadRotalar();
+            secondPanel.style.display = 'block';
+        }
+
+        async function editObject(id) {
+            try {
+                const response = await fetch(`/HaritaNesnesi/GetOneObject/${id}`);
+                const nesne = await response.json();
+                if (nesne && !nesne.error) {
+                    secondPanel.style.display = 'block';
+                    document.getElementById('nesneId').value = nesne.Id || '';
+                    document.getElementById('nesneName').value = nesne.Name || '';
+                    document.getElementById('nesneLat').value = nesne.Latitude || '';
+                    document.getElementById('nesneLon').value = nesne.Longitude || '';
+                    document.getElementById('nesneAlt').value = nesne.Altitude || '';
+                    document.getElementById('nesnePitch').value = nesne.Pitch || '';
+                    document.getElementById('saveNesneBtn').textContent = 'Güncelle';
+                    loadRotalar(nesne.RotaId);
+                } else {
+                    alert('Nesne bilgileri çekilirken bir hata oluştu: ' + (nesne.error || 'Bilinmeyen hata'));
+                }
+            } catch (error) {
+                console.error('Nesne düzenleme hatası:', error);
+                alert('Nesne bilgileri çekilirken bir hata oluştu.');
+            }
+        }
+
+        function toggleVisibility(id, iconElement) {
+            if (!viewer) return;
+            const entity = viewer.entities.getById(id);
+            if (entity) {
+                const newVisibility = !entity.show;
+                $.ajax({
+                    url: '/HaritaNesnesi/ToggleVisibility',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ id: parseInt(id), isVisible: newVisibility }),
+                    success: function (response) {
+                        if (response.success) {
+                            entity.show = newVisibility;
+                            if (entity.show) {
+                                iconElement.classList.remove('fa-eye-slash');
+                                iconElement.classList.add('fa-eye');
+                            } else {
+                                iconElement.classList.remove('fa-eye');
+                                iconElement.classList.add('fa-eye-slash');
+                            }
+                        } else {
+                            alert('Görünürlük durumu güncellenirken bir hata oluştu: ' + response.error);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Sunucuya görünürlük isteği gönderilirken bir hata oluştu.');
+                        console.error('AJAX hatası:', status, error);
+                    }
+                });
+            } else {
+                console.warn(`Uyarı: ID'si ${id} olan nesne haritada bulunamadı.`);
+            }
+        }
+
+        function loadNesneler() {
+            $.ajax({
+                url: '/HaritaNesnesi/GetObjects',
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    const nesneListesi = $("#nesneListesi");
+                    nesneListesi.empty();
+                    if (viewer) {
+                        viewer.entities.removeAll();
+                    }
+                    data.forEach(function (item) {
+                        const eyeClass = item.IsVisible ? 'fa-eye' : 'fa-eye-slash';
+                        const listItem = `
+                                <li class="nesne-item" data-id="${item.Id}">
+                                    <span>${item.Name}</span>
+                                    <div class="icons">
+                                        <i class="fas fa-pencil-alt" title="Düzenle" data-id="${item.Id}"></i>
+                                        <i class="fas ${eyeClass}" title="Göster/Gizle" data-id="${item.Id}"></i>
+                                        <i class="fas fa-search-plus" title="Yakınlaş" data-id="${item.Id}"></i>
+                                        <i class="fas fa-play" title="Simülasyon" data-id="${item.Id}"></i>
+                                        <i class="fas fa-times" title="Sil" data-id="${item.Id}"></i>
+                                    </div>
+                                </li>
+                                `;
+                        nesneListesi.append(listItem);
+                        addCesiumEntity(item);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error('Nesneler yüklenirken bir hata oluştu:', status, error);
+                }
+            });
+        }
+
+        function addCesiumEntity(nesne) {
+            if (viewer && nesne.Latitude && nesne.Longitude) {
+                const entityOptions = {
+                    id: nesne.Id.toString(),
+                    name: nesne.Name,
+                    position: Cesium.Cartesian3.fromDegrees(nesne.Longitude, nesne.Latitude, nesne.Altitude || 0),
+                    show: nesne.IsVisible,
+                };
+                if (nesne.glb_file) {
+                    entityOptions.model = {
+                        uri: nesne.glb_file,
+                        minimumPixelSize: 64,
+                        maximumScale: 20000,
+                    };
+                } else {
+                    entityOptions.point = {
+                        pixelSize: 10,
+                        color: Cesium.Color.BLUE
+                    };
+                }
+                viewer.entities.add(entityOptions);
+            }
+        }
+
+        function zoomToObject(id) {
+            if (!viewer) {
+                console.warn("Viewer henüz oluşturulmadı.");
+                return;
+            }
+            const entity = viewer.entities.getById(id);
+            if (entity) {
+                viewer.flyTo(entity, {
+                    duration: 2
+                });
+            } else {
+                console.warn(`Uyarı: ID'si ${id} olan nesne haritada bulunamadı.`);
+            }
+        }
+
+        function showSimulationPanel(id) {
+            document.getElementById('simulationPanel').style.display = 'block';
+            loadSimulationData(id);
+        }
+
+        function loadSimulationData(id) {
+            const durakTablosuBody = $('#durakTablosu tbody');
+            durakTablosuBody.empty().append('<tr><td colspan="5">Yükleniyor...</td></tr>');
+
+            $.ajax({
+                url: `/HaritaNesnesi/GetRouteData?id=${id}`,
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    durakTablosuBody.empty();
+                    if (data && data.length > 0) {
+                        data.forEach(durak => {
+                            const row = `
+                                <tr>
+                                            <td>${durak.name || 'N/A'}</td>
+                                            <td>${durak.lat !== undefined ? durak.lat.toFixed(4) : 'N/A'}</td>
+                                            <td>${durak.lon !== undefined ? durak.lon.toFixed(4) : 'N/A'}</td>
+                                            <td>${durak.alt || 0}</td>
+                                            <td>${durak.speed || 0}</td>
+                                        </tr>
+                                    `;
+                            durakTablosuBody.append(row);
+                        });
+                    } else {
+                        durakTablosuBody.append('<tr><td colspan="5">Bu nesne için rota verisi bulunamadı.</td></tr>');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    durakTablosuBody.empty().append('<tr><td colspan="5">Rota verisi yüklenirken bir hata oluştu.</td></tr>');
+                    console.error('Rota verisi yükleme hatası:', error);
+                }
+            });
+        }
+
+        function pauseSimulation() {
+            if (viewer && viewer.clock) {
+                viewer.clock.shouldAnimate = false;
+            }
+        }
+
+        function endSimulation() {
+            pauseSimulation();
+            viewer.trackedEntity = undefined;
+            const routeEntities = viewer.entities.values.filter(e => e.id.startsWith('route_'));
+            routeEntities.forEach(e => viewer.entities.remove(e));
+            viewer.entities.removeById('route_line');
+            const startSimulationBtn = document.getElementById('startSimulationBtn');
+            const pauseSimulationBtn = document.getElementById('pauseSimulationBtn');
+            const endSimulationBtn = document.getElementById('endSimulationBtn');
+            startSimulationBtn.style.display = 'inline-block';
+            pauseSimulationBtn.style.display = 'none';
+            endSimulationBtn.style.display = 'none';
+            simulationPanel.style.display = 'none';
+            startSimulationBtn.textContent = 'Simülasyonu Başlat';
+            if (clockListener) {
+                viewer.clock.onTick.removeEventListener(clockListener);
+                clockListener = undefined;
+            }
+
+            if (routeData.length > 1) {
+                generateAndRenderPdfReport();
+                downloadPdfBtn.disabled = false;
+                downloadExcelBtn.disabled = false;
+                downloadWordBtn.disabled = false;
+            } else {
+                const canvas = document.getElementById('pdfCanvas');
+                const context = canvas.getContext('2d');
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                alert("Simülasyon verisi bulunamadığı için rapor oluşturulamadı.");
+            }
+            reportPanel.style.display = 'block';
+        }
+
+        let currentPdfUrl = null;
+
+        async function generateAndRenderPdfReport() {
+            const reportContent = `
+                    <style>
+                        body { font-family: sans-serif; }
+                        #reportHeader {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            margin-bottom: 20px;
+                        }
+                        
+                        #reportTitle {
+                            font-size: 24px;
+                            font-weight: bold;
+                            color: #326346;
+                            flex-grow: 1;
+                            text-align: center;
+                            padding-right: 80px; /* Logo için sağda boşluk bırak */
+                        }
+                        #reportTable {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                        }
+                        #reportTable th, #reportTable td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        #reportTable th {
+                            background-color: #f2f2f2;
+                        }
+                    </style>
+                    <div id="reportHeader">
+                        <h3 id="reportTitle">Uçuş Simülasyon Raporu</h3>
+                    </div>
+                    <table id="reportTable">
+                        <thead>
+                            <tr>
+                                <th>Parametre</th>
+                                <th>Değer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Başlangıç Noktası</td>
+                                <td>${routeData[0].name} (${routeData[0].lat.toFixed(4)}, ${routeData[0].lon.toFixed(4)})</td>
+                            </tr>
+                            <tr>
+                                <td>Bitiş Noktası</td>
+                                <td>${routeData[routeData.length - 1].name} (${routeData[routeData.length - 1].lat.toFixed(4)}, ${routeData[routeData.length - 1].lon.toFixed(4)})</td>
+                            </tr>
+                            <tr>
+                                <td>Ortalama Hız</td>
+                                <td>${(routeData.reduce((sum, d) => sum + (d.speed || 0), 0) / (routeData.length - 1)).toFixed(2)} m/s</td>
+                            </tr>
+                            <tr>
+                                <td>Toplam Mesafe</td>
+                                <td>${(routeData.slice(1).reduce((sum, d, i) => sum + Cesium.Cartesian3.distance(Cesium.Cartesian3.fromDegrees(routeData[i].lon, routeData[i].lat, routeData[i].alt), Cesium.Cartesian3.fromDegrees(d.lon, d.lat, d.alt)), 0) / 1000).toFixed(2)} km</td>
+                            </tr>
+                            <tr>
+                                <td>Ortalama İrtifa</td>
+                                <td>${(routeData.reduce((sum, d) => sum + (d.alt || 0), 0) / routeData.length).toFixed(2)} m</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+
+            const pdfBlob = await html2pdf().from(reportContent).outputPdf('blob');
+            currentPdfUrl = URL.createObjectURL(pdfBlob);
+
+            const loadingTask = pdfjsLib.getDocument(currentPdfUrl);
+            const pdf = await loadingTask.promise;
+            const page = await pdf.getPage(1);
+            const scale = 1.5;
+            const viewport = page.getViewport({ scale: scale });
+
+            const canvas = document.getElementById('pdfCanvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            await page.render(renderContext).promise;
+        }
+
+        function visualizeRoute(routeData) {
+            if (!viewer) return;
+            const routeEntities = viewer.entities.values.filter(e => e.id.startsWith('route_'));
+            routeEntities.forEach(e => viewer.entities.remove(e));
+            routePoints = [];
+            routeData.forEach((durak, index) => {
+                const position = Cesium.Cartesian3.fromDegrees(durak.lon, durak.lat, durak.alt || 0);
+                const pointEntity = viewer.entities.add({
+                    id: `route_point_${index}`,
+                    position: position,
+                    point: {
+                        pixelSize: 8,
+                        color: Cesium.Color.RED,
+                        outlineColor: Cesium.Color.WHITE,
+                        outlineWidth: 2,
+                    },
+                    label: {
+                        text: `${durak.name} (Alt: ${durak.alt || 0}m)`,
+                        font: '14px sans-serif',
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        pixelOffset: new Cesium.Cartesian2(0, -9),
+                        showBackground: true
+                    }
+                });
+                routePoints.push(pointEntity);
+            });
+        }
+
+        function startSimulation(id) {
+            const entity = viewer.entities.getById(id);
+            if (!entity) {
+                alert(`Simülasyon başlatılamadı: ID'si ${id} olan nesne haritada bulunamadı.`);
+                return;
+            }
+
+            if (routeLineEntity) {
+                viewer.entities.remove(routeLineEntity);
+                routeLineEntity = null;
+            }
+            if (modelEntity) {
+                viewer.entities.remove(modelEntity);
+                modelEntity = null;
+            }
+            flightPathPositions = [];
+
+            modelEntity = viewer.entities.add({
+                id: `sim_model_${id}`,
+                name: entity.name,
+                model: entity.model
+            });
+
+            const startPositionCartographic = Cesium.Cartographic.fromCartesian(entity.position.getValue(viewer.clock.currentTime));
+            const startLat = Cesium.Math.toDegrees(startPositionCartographic.latitude);
+            const startLon = Cesium.Math.toDegrees(startPositionCartographic.longitude);
+            const startAlt = startPositionCartographic.height;
+
+            entity.show = false;
+
+            $.ajax({
+                url: `/HaritaNesnesi/GetRouteData?id=${id}`,
+                method: 'GET',
+                dataType: 'json',
+                success: function (fixedRouteData) {
+                    if (fixedRouteData && fixedRouteData.length > 0) {
+                        routeData = [
+                            { name: "Başlangıç", lat: startLat, lon: startLon, alt: startAlt, pitch: 0, roll: 0, speed: 50 },
+                            ...fixedRouteData
+                        ];
+                        visualizeRoute(routeData);
+
+                        const positionProperty = new Cesium.SampledPositionProperty();
+                        const pathPositions = [];
+                        const startTime = viewer.clock.currentTime;
+                        let cumulativeTime = 0;
+
+                        routeData.forEach((durak, index) => {
+                            const time = Cesium.JulianDate.addSeconds(startTime, cumulativeTime, new Cesium.JulianDate());
+                            const position = Cesium.Cartesian3.fromDegrees(durak.lon, durak.lat, durak.alt || 0);
+                            positionProperty.addSample(time, position);
+                            pathPositions.push(position);
+
+                            if (index < routeData.length - 1) {
+                                const nextDurak = routeData[index + 1];
+                                const nextPosition = Cesium.Cartesian3.fromDegrees(nextDurak.lon, nextDurak.lat, nextDurak.alt || 0);
+                                const distance = Cesium.Cartesian3.distance(position, nextPosition);
+                                const timeToNextDurak = distance / (durak.speed || 1);
+                                cumulativeTime += timeToNextDurak;
+                            }
+                        });
+
+                        modelEntity.orientation = new Cesium.VelocityOrientationProperty(positionProperty);
+                        modelEntity.position = positionProperty;
+
+                        // 1. Kalan rota için kesikli, gri çizgi
+                        viewer.entities.add({
+                            polyline: {
+                                positions: pathPositions,
+                                width: 3,
+                                material: new Cesium.PolylineDashMaterialProperty({
+                                    color: Cesium.Color.LIGHTGRAY,
+                                    dashLength: 10.0,
+                                    dashPattern: 0x0101
+                                }),
+                                clampToGround: false,
+                            }
+                        });
+
+                        // 2. Tamamlanmış rota için düz, mavi çizgi
+                        routeLineEntity = viewer.entities.add({
+                            polyline: {
+                                positions: new Cesium.CallbackProperty(() => {
+                                    const currentTime = viewer.clock.currentTime;
+                                    const currentPosition = modelEntity.position.getValue(currentTime);
+                                    if (Cesium.defined(currentPosition)) {
+                                        // Tamamlanmış rotanın pozisyonları
+                                        const completedPositions = [];
+                                        for (let i = 0; i < pathPositions.length; i++) {
+                                            if (Cesium.Cartesian3.distance(pathPositions[i], currentPosition) < 100) {
+                                                // Uçağın mevcut pozisyonuna yakın olan noktayı bul
+                                                // Bu yaklaşım performans sorunları yaratabilir. Daha iyi bir yol bulalım.
+                                            }
+                                        }
+
+                                        // En basit ve en verimli yöntem: Sadece mevcut pozisyonları takip eden bir çizgi
+                                        flightPathPositions.push(currentPosition.clone());
+                                        return flightPathPositions;
+                                    }
+                                    return undefined;
+                                }, false),
+                                width: 3,
+                                material: new Cesium.PolylineDashMaterialProperty({
+                                    color: Cesium.Color.DODGERBLUE,
+                                    dashLength: 10.0,
+                                    dashPattern: 0x0101
+                                }),
+                                clampToGround: false
+                            }
+                        });
+
+
+                        viewer.trackedEntity = modelEntity;
+                        viewer.clock.shouldAnimate = true;
+                        viewer.clock.stopTime = Cesium.JulianDate.addSeconds(startTime, cumulativeTime, new Cesium.JulianDate());
+                        viewer.clock.currentTime = startTime;
+
+                        // Uçuş hızını ayarla (m/s cinsinden hız, zamanı 10'la çarpar)
+                        viewer.clock.multiplier = 1;
+
+                        viewer.clock.onTick.addEventListener(() => {
+                            if (Cesium.JulianDate.lessThanOrEquals(viewer.clock.stopTime, viewer.clock.currentTime)) {
+                                endSimulation();
+                            }
+                        });
+
+                        simulationPanel.style.display = 'none';
+
+                    } else {
+                        alert('Bu nesne için geçerli rota verisi bulunamadı.');
+                    }
+                },
+                error: function () {
+                    alert('Simülasyon başlatılamadı, rota verisi alınamadı.');
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
